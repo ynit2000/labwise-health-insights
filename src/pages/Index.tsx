@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Upload, FileText, Brain, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,19 +20,10 @@ const Index = () => {
   const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
-    // Automatically set up API key
-    const defaultApiKey = 'K88990872588957';
-    
     // Check if API key exists in localStorage
     const savedApiKey = localStorage.getItem('ocr_api_key');
-    
     if (savedApiKey) {
       ocrApiService.setApiKey(savedApiKey);
-      setHasApiKey(true);
-    } else {
-      // Automatically set the default API key
-      localStorage.setItem('ocr_api_key', defaultApiKey);
-      ocrApiService.setApiKey(defaultApiKey);
       setHasApiKey(true);
     }
   }, []);
