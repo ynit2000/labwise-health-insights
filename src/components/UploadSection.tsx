@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Camera, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Camera, AlertCircle, Scan } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -69,9 +69,14 @@ const UploadSection = ({ onFileUpload }: UploadSectionProps) => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Upload Your Lab Report</h2>
+        <div className="flex items-center justify-center mb-4">
+          <div className="bg-blue-100 p-3 rounded-full mr-3">
+            <Scan className="h-8 w-8 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">AI-Powered Lab Report Scanner</h2>
+        </div>
         <p className="text-gray-600 text-lg">
-          Drag and drop your lab report or click to browse. We support PDF, JPEG, and PNG files.
+          Upload your lab report and our AI will automatically extract and analyze all parameters using advanced OCR technology.
         </p>
       </div>
 
@@ -95,19 +100,20 @@ const UploadSection = ({ onFileUpload }: UploadSectionProps) => {
             />
             
             <div className="flex flex-col items-center space-y-4">
-              <div className="bg-blue-100 p-4 rounded-full">
+              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 rounded-full">
                 <Upload className="h-12 w-12 text-blue-600" />
               </div>
               
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Drop your lab report here
+                  Drop your lab report here for instant scanning
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  or click to browse from your device
+                  AI will automatically extract patient info and all test parameters
                 </p>
                 <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                  Choose File
+                  <Scan className="mr-2 h-4 w-4" />
+                  Choose File to Scan
                 </Button>
               </div>
             </div>
@@ -119,16 +125,16 @@ const UploadSection = ({ onFileUpload }: UploadSectionProps) => {
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-green-700">
-              <FileText className="h-5 w-5 mr-2" />
-              Supported Formats
+              <Scan className="h-5 w-5 mr-2" />
+              OCR Technology
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>• PDF documents (.pdf)</li>
-              <li>• JPEG images (.jpg, .jpeg)</li>
-              <li>• PNG images (.png)</li>
-              <li>• Maximum file size: 10MB</li>
+              <li>• Automatic text extraction from images</li>
+              <li>• Intelligent parameter detection</li>
+              <li>• Real-time data processing</li>
+              <li>• Supports handwritten reports</li>
             </ul>
           </CardContent>
         </Card>
@@ -137,15 +143,15 @@ const UploadSection = ({ onFileUpload }: UploadSectionProps) => {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-blue-700">
               <AlertCircle className="h-5 w-5 mr-2" />
-              Privacy & Security
+              Smart Analysis
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>• Your data is encrypted and secure</li>
-              <li>• Reports processed locally when possible</li>
-              <li>• No data stored without consent</li>
-              <li>• HIPAA-compliant processing</li>
+              <li>• Auto-detects abnormal values</li>
+              <li>• Provides instant explanations</li>
+              <li>• Severity classification</li>
+              <li>• Personalized recommendations</li>
             </ul>
           </CardContent>
         </Card>

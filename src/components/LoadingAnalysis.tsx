@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FileText, Brain, Eye, Stethoscope } from 'lucide-react';
+import { FileText, Brain, Eye, Stethoscope, Scan } from 'lucide-react';
 
 interface LoadingAnalysisProps {
   fileName: string;
@@ -13,27 +13,27 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { icon: FileText, label: "Extracting text from report", description: "Using OCR technology to read your report" },
-    { icon: Eye, label: "Analyzing parameters", description: "Identifying test values and comparing to normal ranges" },
-    { icon: Brain, label: "Generating explanations", description: "Creating easy-to-understand explanations" },
-    { icon: Stethoscope, label: "Preparing recommendations", description: "Formulating health recommendations" }
+    { icon: Scan, label: "Scanning document with OCR", description: "Using advanced OCR technology to extract text from your report" },
+    { icon: Eye, label: "Identifying test parameters", description: "Detecting test names, values, and reference ranges" },
+    { icon: Brain, label: "Analyzing results with AI", description: "Comparing values against normal ranges and generating explanations" },
+    { icon: Stethoscope, label: "Preparing recommendations", description: "Creating personalized health recommendations and suggestions" }
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
-        const increment = Math.random() * 15 + 5;
+        const increment = Math.random() * 12 + 3;
         return Math.min(prev + increment, 100);
       });
-    }, 200);
+    }, 300);
 
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
         if (prev < steps.length - 1) return prev + 1;
         return prev;
       });
-    }, 750);
+    }, 1000);
 
     return () => {
       clearInterval(interval);
@@ -45,8 +45,9 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
     <div className="max-w-4xl mx-auto">
       <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-blue-900 mb-2">
-            Analyzing Your Lab Report
+          <CardTitle className="text-2xl text-blue-900 mb-2 flex items-center justify-center">
+            <Scan className="mr-3 h-8 w-8 animate-pulse" />
+            AI is Scanning Your Lab Report
           </CardTitle>
           <p className="text-blue-700">
             Processing: <span className="font-semibold">{fileName}</span>
@@ -55,7 +56,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
         <CardContent className="space-y-6">
           <div>
             <div className="flex justify-between text-sm text-blue-700 mb-2">
-              <span>Progress</span>
+              <span>OCR & Analysis Progress</span>
               <span>{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-3" />
@@ -72,7 +73,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
                   key={index}
                   className={`flex items-center p-4 rounded-lg transition-all duration-500 ${
                     isActive
-                      ? 'bg-blue-100 border-l-4 border-l-blue-500 shadow-md'
+                      ? 'bg-blue-100 border-l-4 border-l-blue-500 shadow-md transform scale-105'
                       : isCompleted
                       ? 'bg-green-50 border-l-4 border-l-green-500'
                       : 'bg-gray-50 border-l-4 border-l-gray-300'
@@ -81,7 +82,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
                   <div
                     className={`p-2 rounded-full mr-4 ${
                       isActive
-                        ? 'bg-blue-500 text-white animate-pulse'
+                        ? 'bg-blue-500 text-white animate-spin'
                         : isCompleted
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-300 text-gray-600'
@@ -111,7 +112,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
           </div>
 
           <div className="text-center text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-            <p>🔒 Your report is being processed securely and will not be stored without your permission.</p>
+            <p>🔒 Your report is being processed securely using advanced OCR technology and will not be stored without your permission.</p>
           </div>
         </CardContent>
       </Card>

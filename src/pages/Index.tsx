@@ -8,6 +8,9 @@ import ResultsDashboard from '@/components/ResultsDashboard';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
+import { ocrService, ExtractedData } from '@/services/ocrService';
+import { aiExplanationService } from '@/services/aiExplanationService';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -18,62 +21,79 @@ const Index = () => {
     setUploadedFile(file);
     setIsAnalyzing(true);
     
-    // Simulate OCR and analysis process
-    setTimeout(() => {
-      // Mock analysis results based on the uploaded lab report
-      const mockResults = {
-        patientInfo: {
-          name: "Sample Patient",
-          age: "26 YRS",
-          gender: "M",
-          reportDate: "03/03/2025"
-        },
-        parameters: [
-          {
-            name: "Hemoglobin",
-            value: 15,
-            unit: "g/dl",
-            normalRange: "13 - 17",
-            status: "normal",
-            severity: "normal",
-            explanation: "Your hemoglobin level is within the normal range, indicating healthy oxygen-carrying capacity in your blood."
-          },
-          {
-            name: "Lymphocyte",
-            value: 18,
-            unit: "%",
-            normalRange: "20 - 40",
-            status: "low",
-            severity: "mild",
-            explanation: "Your lymphocyte percentage is slightly below normal. This could indicate a recent infection or immune system stress. Consider monitoring and consult your doctor if you have symptoms."
-          },
-          {
-            name: "Monocytes",
-            value: 1,
-            unit: "%",
-            normalRange: "2 - 10",
-            status: "low",
-            severity: "mild",
-            explanation: "Slightly low monocyte count. This is usually not concerning but worth monitoring in follow-up tests."
-          },
-          {
-            name: "Mean Cell Haemoglobin Con, MCHC",
-            value: 35.7,
-            unit: "%",
-            normalRange: "31.5 - 34.5",
-            status: "high",
-            severity: "monitor",
-            explanation: "Slightly elevated MCHC may indicate dehydration or certain blood disorders. Ensure adequate hydration and follow up with your doctor."
-          }
-        ],
-        overallRecommendation: "Most parameters are within normal limits. Monitor the slightly abnormal values and consider follow-up testing in 3-6 months or as advised by your physician.",
-        urgency: "routine",
-        doctorType: "General Physician"
+    try {
+      console.log('Starting file analysis for:', file.name);
+      
+      // Extract text using OCR
+      const extractedText = await ocrService.extractTextFromFile(file);
+      console.log('OCR completed, extracted text length:', extractedText.length);
+      
+      // Parse the lab report data
+      const extractedData: ExtractedData = ocrService.parseLabReport(extractedText);
+      console.log('Lab report parsed:', extractedData);
+      
+      // Enhance parameters with AI explanations
+      const enhancedParameters = extractedData.parameters.map(param => ({
+        ...param,
+        explanation: aiExplanationService.generateExplanation(
+          param.name, 
+          param.status, 
+          typeof param.value === 'number' ? param.value : 0, 
+          param.normalRange
+        )
+      }));
+      
+      // Generate overall recommendations
+      const abnormalParams = enhancedParameters.filter(p => p.status !== 'normal');
+      const criticalParams = abnormalParams.filter(p => p.severity === 'critical');
+      
+      let overallRecommendation = '';
+      let urgency = 'routine';
+      let doctorType = 'General Physician';
+      
+      if (criticalParams.length > 0) {
+        overallRecommendation = 'Critical values detected. Immediate medical attention recommended.';
+        urgency = 'urgent';
+        doctorType = 'Emergency Care';
+      } else if (abnormalParams.length > 3) {
+        overallRecommendation = 'Multiple parameters are outside normal range. Schedule an appointment with your doctor for comprehensive evaluation.';
+        urgency = 'moderate';
+        doctorType = 'General Physician';
+      } else if (abnormalParams.length > 0) {
+        overallRecommendation = 'Some parameters need attention. Monitor these values and consult your doctor if symptoms develop.';
+        urgency = 'routine';
+        doctorType = 'General Physician';
+      } else {
+        overallRecommendation = 'All parameters are within normal limits. Continue maintaining a healthy lifestyle.';
+        urgency = 'routine';
+        doctorType = 'General Physician';
+      }
+      
+      const results = {
+        patientInfo: extractedData.patientInfo,
+        parameters: enhancedParameters,
+        overallRecommendation,
+        urgency,
+        doctorType
       };
       
-      setAnalysisResults(mockResults);
+      setAnalysisResults(results);
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Successfully extracted ${enhancedParameters.length} parameters from your lab report.`,
+      });
+      
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Unable to extract data from the file. Please ensure the image is clear and try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const resetAnalysis = () => {
