@@ -13,7 +13,7 @@ interface ApiKeyConfigProps {
 }
 
 const ApiKeyConfig = ({ onApiKeySet, hasApiKey }: ApiKeyConfigProps) => {
-  const [apiKey, setApiKey] = useState('K88990872588957');
+  const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
