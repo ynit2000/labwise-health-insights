@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ArrowLeft, Download, Share2, AlertCircle, CheckCircle, Clock, FileText, User, Calendar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
 import LoadingAnalysis from '@/components/LoadingAnalysis';
+import { PDFExportService } from '@/services/pdfExportService';
 
 interface ResultsDashboardProps {
   file: File | null;
@@ -16,6 +17,8 @@ interface ResultsDashboardProps {
 }
 
 const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashboardProps) => {
+  const [isExporting, setIsExporting] = useState(false);
+
   if (isAnalyzing) {
     return <LoadingAnalysis fileName={file?.name || 'Lab Report'} />;
   }
@@ -23,6 +26,39 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
   if (!results) {
     return null;
   }
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      
+      const exportData = {
+        patientInfo: results.patientInfo,
+        parameters: results.parameters,
+        overallRecommendation: results.overallRecommendation,
+        urgency: results.urgency,
+        doctorType: results.doctorType
+      };
+      
+      const fileName = `lab-report-${results.patientInfo.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      await PDFExportService.exportToPDF(exportData, fileName);
+      
+      toast({
+        title: "PDF Export Successful",
+        description: "Your lab report has been prepared for download.",
+      });
+      
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -61,9 +97,14 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
           Upload New Report
         </Button>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportPDF}
+            disabled={isExporting}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export PDF
+            {isExporting ? 'Preparing PDF...' : 'Export PDF'}
           </Button>
           <Button variant="outline" size="sm">
             <Share2 className="h-4 w-4 mr-2" />
