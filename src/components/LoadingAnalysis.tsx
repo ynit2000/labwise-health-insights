@@ -14,28 +14,26 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
 
   const steps = [
     { icon: Scan, label: "Connecting to OCR API", description: "Establishing secure connection to OCR.space API service" },
-    { icon: Eye, label: "Processing with advanced OCR", description: "Extracting text from your lab report with high accuracy" },
-    { icon: Brain, label: "Analyzing lab parameters", description: "Parsing and identifying lab values and normal ranges" },
-    { icon: Stethoscope, label: "Generating health insights", description: "Creating personalized explanations and recommendations" }
+    { icon: Eye, label: "Processing with advanced OCR", description: "Using professional OCR engine to extract text with high accuracy" },
+    { icon: Brain, label: "Analyzing results with AI", description: "Comparing values against normal ranges and generating explanations" },
+    { icon: Stethoscope, label: "Preparing recommendations", description: "Creating personalized health recommendations and suggestions" }
   ];
 
   useEffect(() => {
-    // More aggressive progress updates
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
-        const increment = Math.random() * 15 + 8; // Faster progress increments
+        const increment = Math.random() * 12 + 3;
         return Math.min(prev + increment, 100);
       });
-    }, 200); // Faster updates
+    }, 300);
 
-    // Faster step transitions
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
         if (prev < steps.length - 1) return prev + 1;
         return prev;
       });
-    }, 800); // Faster step transitions
+    }, 1000);
 
     return () => {
       clearInterval(interval);
@@ -49,7 +47,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-blue-900 mb-2 flex items-center justify-center">
             <Scan className="mr-3 h-8 w-8 animate-pulse" />
-            Analyzing Your Lab Report
+            Professional OCR API is Analyzing Your Lab Report
           </CardTitle>
           <p className="text-blue-700">
             Processing: <span className="font-semibold">{fileName}</span>
@@ -58,7 +56,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
         <CardContent className="space-y-6">
           <div>
             <div className="flex justify-between text-sm text-blue-700 mb-2">
-              <span>Analysis Progress</span>
+              <span>OCR API & Analysis Progress</span>
               <span>{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-3" />
@@ -73,7 +71,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
               return (
                 <div
                   key={index}
-                  className={`flex items-center p-4 rounded-lg transition-all duration-300 ${
+                  className={`flex items-center p-4 rounded-lg transition-all duration-500 ${
                     isActive
                       ? 'bg-blue-100 border-l-4 border-l-blue-500 shadow-md transform scale-105'
                       : isCompleted
@@ -84,13 +82,13 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
                   <div
                     className={`p-2 rounded-full mr-4 ${
                       isActive
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-blue-500 text-white animate-spin'
                         : isCompleted
                         ? 'bg-green-500 text-white'
                         : 'bg-gray-300 text-gray-600'
                     }`}
                   >
-                    <StepIcon className={`h-5 w-5 ${isActive ? 'animate-pulse' : ''}`} />
+                    <StepIcon className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
                     <h4
@@ -108,18 +106,13 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
                       {step.description}
                     </p>
                   </div>
-                  {isActive && (
-                    <div className="ml-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
 
           <div className="text-center text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-            <p>🔒 Your report is being processed securely and will not be stored without your permission.</p>
+            <p>🔒 Your report is being processed securely using professional OCR.space API and will not be stored without your permission.</p>
           </div>
         </CardContent>
       </Card>
