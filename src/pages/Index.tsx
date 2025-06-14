@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Upload, FileText, Brain, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,38 +68,18 @@ const Index = () => {
         )
       }));
       
-      // Generate overall recommendations
-      const abnormalParams = enhancedParameters.filter(p => p.status !== 'normal');
-      const criticalParams = abnormalParams.filter(p => p.severity === 'critical');
-      
-      let overallRecommendation = '';
-      let urgency = 'routine';
-      let doctorType = 'General Physician';
-      
-      if (criticalParams.length > 0) {
-        overallRecommendation = 'Critical values detected. Immediate medical attention recommended.';
-        urgency = 'urgent';
-        doctorType = 'Emergency Care';
-      } else if (abnormalParams.length > 3) {
-        overallRecommendation = 'Multiple parameters are outside normal range. Schedule an appointment with your doctor for comprehensive evaluation.';
-        urgency = 'moderate';
-        doctorType = 'General Physician';
-      } else if (abnormalParams.length > 0) {
-        overallRecommendation = 'Some parameters need attention. Monitor these values and consult your doctor if symptoms develop.';
-        urgency = 'routine';
-        doctorType = 'General Physician';
-      } else {
-        overallRecommendation = 'All parameters are within normal limits. Continue maintaining a healthy lifestyle.';
-        urgency = 'routine';
-        doctorType = 'General Physician';
-      }
+      // Generate enhanced doctor recommendation
+      const doctorRecommendation = aiExplanationService.generateDoctorRecommendation(enhancedParameters);
       
       const results = {
         patientInfo: extractedData.patientInfo,
         parameters: enhancedParameters,
-        overallRecommendation,
-        urgency,
-        doctorType
+        overallRecommendation: doctorRecommendation.reason,
+        urgency: doctorRecommendation.urgency,
+        doctorType: doctorRecommendation.specialty,
+        timeframe: doctorRecommendation.timeframe,
+        nextSteps: doctorRecommendation.nextSteps,
+        reason: doctorRecommendation.reason
       };
       
       setAnalysisResults(results);

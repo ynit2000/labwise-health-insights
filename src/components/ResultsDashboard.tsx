@@ -88,6 +88,28 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
   const abnormalParameters = results.parameters.filter((param: any) => param.status !== 'normal');
   const normalParameters = results.parameters.filter((param: any) => param.status === 'normal');
 
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'moderate':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+
+  const getUrgencyIcon = (urgency: string) => {
+    switch (urgency) {
+      case 'urgent':
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
+      case 'moderate':
+        return <Clock className="h-5 w-5 text-orange-600" />;
+      default:
+        return <Calendar className="h-5 w-5 text-blue-600" />;
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
@@ -243,28 +265,86 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
         </CardContent>
       </Card>
 
-      {/* Doctor Recommendation */}
-      <Card className="border-l-4 border-l-blue-500">
+      {/* Enhanced Doctor Recommendation */}
+      <Card className={`border-l-4 ${results.urgency === 'urgent' ? 'border-l-red-500' : results.urgency === 'moderate' ? 'border-l-orange-500' : 'border-l-blue-500'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center text-blue-700">
-            <Clock className="h-5 w-5 mr-2" />
-            Doctor Recommendation
+          <CardTitle className={`flex items-center ${results.urgency === 'urgent' ? 'text-red-700' : results.urgency === 'moderate' ? 'text-orange-700' : 'text-blue-700'}`}>
+            {getUrgencyIcon(results.urgency)}
+            <span className="ml-2">Doctor Recommendation</span>
           </CardTitle>
+          <CardDescription>
+            Personalized healthcare guidance based on your lab results
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-blue-700 border-blue-300">
-                {results.urgency === 'routine' ? 'Routine Follow-up' : 'Urgent'}
-              </Badge>
-              <span className="text-sm text-gray-600">•</span>
-              <span className="text-sm font-medium">{results.doctorType}</span>
-            </div>
-            <p className="text-gray-700">
-              Based on your results, we recommend scheduling a routine appointment with a {results.doctorType.toLowerCase()} 
-              to discuss your report and any necessary follow-up actions.
+        <CardContent className="space-y-6">
+          {/* Urgency and Specialty */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge className={getUrgencyColor(results.urgency)}>
+              {results.urgency === 'urgent' ? '🚨 Urgent' : results.urgency === 'moderate' ? '⚠️ Moderate Priority' : '📅 Routine'}
+            </Badge>
+            <Badge variant="outline" className="text-blue-700 border-blue-300">
+              <User className="h-3 w-3 mr-1" />
+              {results.doctorType}
+            </Badge>
+            <Badge variant="outline" className="text-green-700 border-green-300">
+              <Calendar className="h-3 w-3 mr-1" />
+              {results.timeframe || (results.urgency === 'urgent' ? 'Within 24-48 hours' : results.urgency === 'moderate' ? 'Within 1-2 weeks' : 'Within 2-4 weeks')}
+            </Badge>
+          </div>
+
+          {/* Recommendation Reason */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-gray-800 mb-2">Why this recommendation?</h4>
+            <p className="text-gray-700 leading-relaxed">
+              {results.reason || results.overallRecommendation}
             </p>
           </div>
+
+          {/* Next Steps */}
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+              Recommended Next Steps
+            </h4>
+            <div className="space-y-2">
+              {(results.nextSteps || [
+                'Schedule an appointment with your healthcare provider',
+                'Bring your complete lab report to the appointment',
+                'Prepare a list of any symptoms or health concerns',
+                'Continue following any current treatment plans'
+              ]).map((step: string, index: number) => (
+                <div key={index} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-semibold text-blue-700">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          {results.urgency === 'urgent' && (
+            <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>Important:</strong> Critical values have been detected. Please seek immediate medical attention and do not delay in contacting your healthcare provider.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {results.urgency !== 'urgent' && abnormalParameters.length > 0 && (
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <h5 className="font-medium text-yellow-800 mb-2">General Health Tips:</h5>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• Maintain a balanced diet rich in fruits and vegetables</li>
+                <li>• Stay adequately hydrated throughout the day</li>
+                <li>• Engage in regular physical activity as appropriate</li>
+                <li>• Get adequate rest and manage stress levels</li>
+                <li>• Follow up on any prescribed medications or treatments</li>
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
