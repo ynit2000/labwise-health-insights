@@ -17,6 +17,72 @@ export class OCRApiService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // Add API key validation function
+  async validateApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
+    try {
+      console.log('Validating OCR API key...');
+      
+      // Create a simple test image (1x1 pixel base64 image)
+      const testImageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      
+      const formData = new FormData();
+      formData.append('base64Image', testImageBase64);
+      formData.append('apikey', apiKey);
+      formData.append('language', 'eng');
+      formData.append('isOverlayRequired', 'false');
+      
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.status === 403) {
+        const errorText = await response.text();
+        console.error('API key validation failed:', errorText);
+        return { 
+          isValid: false, 
+          error: 'Invalid API key or access denied. Please check your OCR.space API key.' 
+        };
+      }
+      
+      if (response.status === 401) {
+        return { 
+          isValid: false, 
+          error: 'Unauthorized. Please check your OCR.space API key.' 
+        };
+      }
+      
+      if (!response.ok) {
+        return { 
+          isValid: false, 
+          error: `API validation failed: ${response.status} - ${response.statusText}` 
+        };
+      }
+      
+      const result = await response.json();
+      
+      if (result.IsErroredOnProcessing) {
+        const errorMessage = result.ParsedResults?.[0]?.ErrorMessage;
+        if (errorMessage && errorMessage.includes('Invalid API key')) {
+          return { 
+            isValid: false, 
+            error: 'Invalid API key. Please check your OCR.space API key.' 
+          };
+        }
+      }
+      
+      console.log('API key validation successful');
+      return { isValid: true };
+      
+    } catch (error) {
+      console.error('API key validation error:', error);
+      return { 
+        isValid: false, 
+        error: `Validation failed: ${error.message}` 
+      };
+    }
+  }
+
   private async makeOCRRequest(formData: FormData, attempt: number = 1): Promise<OCRApiResponse> {
     console.log(`OCR API attempt ${attempt}/${this.maxRetries}`);
     

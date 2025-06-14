@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Key, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ocrApiService } from '@/services/ocrApiService';
 
 interface ApiKeyConfigProps {
   onApiKeySet: (apiKey: string) => void;
@@ -32,18 +33,30 @@ const ApiKeyConfig = ({ onApiKeySet, hasApiKey }: ApiKeyConfigProps) => {
     setIsLoading(true);
     
     try {
+      // Validate API key before setting it
+      const validation = await ocrApiService.validateApiKey(apiKey.trim());
+      
+      if (!validation.isValid) {
+        toast({
+          title: "Invalid API Key",
+          description: validation.error || "Please check your OCR.space API key and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       // Store API key in localStorage for this session
       localStorage.setItem('ocr_api_key', apiKey.trim());
       onApiKeySet(apiKey.trim());
       
       toast({
-        title: "API Key Set Successfully",
-        description: "You can now upload and analyze lab reports",
+        title: "API Key Validated Successfully",
+        description: "Your API key has been verified and you can now upload lab reports",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to set API key. Please try again.",
+        title: "Validation Failed",
+        description: "Failed to validate API key. Please check your internet connection and try again.",
         variant: "destructive"
       });
     } finally {
@@ -109,7 +122,7 @@ const ApiKeyConfig = ({ onApiKeySet, hasApiKey }: ApiKeyConfigProps) => {
           </div>
           
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Setting up...' : 'Set API Key'}
+            {isLoading ? 'Validating API Key...' : 'Validate & Set API Key'}
           </Button>
           
           <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
