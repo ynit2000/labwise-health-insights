@@ -9,7 +9,8 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import ApiKeyConfig from '@/components/ApiKeyConfig';
-import { ocrApiService, ExtractedData } from '@/services/ocrApiService';
+import { ocrApiService } from '@/services/ocrApiService';
+import { ExtractedData } from '@/types/ocrTypes';
 import { aiExplanationService } from '@/services/aiExplanationService';
 import { toast } from '@/hooks/use-toast';
 
