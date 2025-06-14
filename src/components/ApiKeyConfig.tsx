@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,36 @@ const ApiKeyConfig = ({ onApiKeySet, hasApiKey }: ApiKeyConfigProps) => {
   const [apiKey, setApiKey] = useState('K88990872588957');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Automatically set the API key when component mounts
+  useEffect(() => {
+    if (!hasApiKey && apiKey) {
+      handleAutoSetup();
+    }
+  }, []);
+
+  const handleAutoSetup = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Store API key in localStorage for this session
+      localStorage.setItem('ocr_api_key', apiKey.trim());
+      onApiKeySet(apiKey.trim());
+      
+      toast({
+        title: "API Key Configured Automatically",
+        description: "OCR service is ready to use",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to configure API key automatically",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +88,20 @@ const ApiKeyConfig = ({ onApiKeySet, hasApiKey }: ApiKeyConfigProps) => {
           <div className="flex items-center justify-center text-green-700">
             <Key className="h-5 w-5 mr-2" />
             <span>OCR API Key is configured and ready to use</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show loading state during auto-setup
+  if (isLoading) {
+    return (
+      <Card className="border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center text-blue-700">
+            <Key className="h-5 w-5 mr-2 animate-spin" />
+            <span>Configuring OCR API automatically...</span>
           </div>
         </CardContent>
       </Card>
