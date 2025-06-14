@@ -13,8 +13,8 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    { icon: Scan, label: "Scanning document with OCR", description: "Using advanced OCR technology to extract text from your report" },
-    { icon: Eye, label: "Identifying test parameters", description: "Detecting test names, values, and reference ranges" },
+    { icon: Scan, label: "Connecting to OCR API", description: "Establishing secure connection to OCR.space API service" },
+    { icon: Eye, label: "Processing with advanced OCR", description: "Using professional OCR engine to extract text with high accuracy" },
     { icon: Brain, label: "Analyzing results with AI", description: "Comparing values against normal ranges and generating explanations" },
     { icon: Stethoscope, label: "Preparing recommendations", description: "Creating personalized health recommendations and suggestions" }
   ];
@@ -47,7 +47,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-blue-900 mb-2 flex items-center justify-center">
             <Scan className="mr-3 h-8 w-8 animate-pulse" />
-            AI is Scanning Your Lab Report
+            Professional OCR API is Analyzing Your Lab Report
           </CardTitle>
           <p className="text-blue-700">
             Processing: <span className="font-semibold">{fileName}</span>
@@ -56,7 +56,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
         <CardContent className="space-y-6">
           <div>
             <div className="flex justify-between text-sm text-blue-700 mb-2">
-              <span>OCR & Analysis Progress</span>
+              <span>OCR API & Analysis Progress</span>
               <span>{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="h-3" />
@@ -112,7 +112,7 @@ const LoadingAnalysis = ({ fileName }: LoadingAnalysisProps) => {
           </div>
 
           <div className="text-center text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-            <p>🔒 Your report is being processed securely using advanced OCR technology and will not be stored without your permission.</p>
+            <p>🔒 Your report is being processed securely using professional OCR.space API and will not be stored without your permission.</p>
           </div>
         </CardContent>
       </Card>
