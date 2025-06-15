@@ -16,6 +16,60 @@ interface ResultsDashboardProps {
   onReset: () => void;
 }
 
+const getRecommendationTitle = (urgency: string, specialty?: string) => {
+  switch (urgency) {
+    case 'critical':
+      return `Emergency: Immediate Medical Attention Required${specialty ? ` (${specialty})` : ''}`;
+    case 'urgent':
+      return `${specialty || 'Doctor'} Referral - Urgent`;
+    case 'moderate':
+      return `Follow-Up: ${specialty || 'Doctor'} (Moderate Priority)`;
+    default:
+      return `Routine Follow-Up with ${specialty || 'General Physician'}`;
+  }
+};
+
+const getUrgencyColor = (urgency: string) => {
+  switch (urgency) {
+    case 'critical':
+    case 'urgent':
+      return 'text-red-700 border-l-red-500';
+    case 'moderate':
+      return 'text-orange-700 border-l-orange-500';
+    default:
+      return 'text-blue-700 border-l-blue-500';
+  }
+};
+
+const getUrgencyBadge = (urgency: string) => {
+  switch (urgency) {
+    case 'critical':
+      return (
+        <Badge className="bg-red-100 text-red-700 border-red-200">
+          🚨 Emergency
+        </Badge>
+      );
+    case 'urgent':
+      return (
+        <Badge className="bg-red-100 text-red-700 border-red-200">
+          🔴 Urgent
+        </Badge>
+      );
+    case 'moderate':
+      return (
+        <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+          ⚠️ Moderate Priority
+        </Badge>
+      );
+    default:
+      return (
+        <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+          📅 Routine
+        </Badge>
+      );
+  }
+};
+
 const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashboardProps) => {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -88,27 +142,17 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
   const abnormalParameters = results.parameters.filter((param: any) => param.status !== 'normal');
   const normalParameters = results.parameters.filter((param: any) => param.status === 'normal');
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'moderate':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
-  };
-
-  const getUrgencyIcon = (urgency: string) => {
-    switch (urgency) {
-      case 'urgent':
-        return <AlertCircle className="h-5 w-5 text-red-600" />;
-      case 'moderate':
-        return <Clock className="h-5 w-5 text-orange-600" />;
-      default:
-        return <Calendar className="h-5 w-5 text-blue-600" />;
-    }
-  };
+  const recUrgency = results.urgency || 'routine';
+  const recSpecialty = results.doctorType || 'General Physician';
+  const recTitle = getRecommendationTitle(recUrgency, recSpecialty);
+  const urgencyClass = getUrgencyColor(recUrgency);
+  const urgencyBadge = getUrgencyBadge(recUrgency);
+  const timeframe = results.timeframe || (
+    recUrgency === 'critical' ? 'Within 24 hours' :
+    recUrgency === 'urgent' ? 'Within 24-48 hours' :
+    recUrgency === 'moderate' ? 'Within 1-2 weeks' :
+    'Within 4-6 weeks'
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -266,11 +310,11 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
       </Card>
 
       {/* Enhanced Doctor Recommendation */}
-      <Card className={`border-l-4 ${results.urgency === 'urgent' ? 'border-l-red-500' : results.urgency === 'moderate' ? 'border-l-orange-500' : 'border-l-blue-500'}`}>
+      <Card className={`border-l-4 ${urgencyClass}`}>
         <CardHeader>
-          <CardTitle className={`flex items-center ${results.urgency === 'urgent' ? 'text-red-700' : results.urgency === 'moderate' ? 'text-orange-700' : 'text-blue-700'}`}>
-            {getUrgencyIcon(results.urgency)}
-            <span className="ml-2">Doctor Recommendation</span>
+          <CardTitle className={`flex items-center ${urgencyClass}`}>
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span className="ml-2">{recTitle}</span>
           </CardTitle>
           <CardDescription>
             Personalized healthcare guidance based on your lab results
@@ -279,16 +323,14 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
         <CardContent className="space-y-6">
           {/* Urgency and Specialty */}
           <div className="flex flex-wrap items-center gap-3">
-            <Badge className={getUrgencyColor(results.urgency)}>
-              {results.urgency === 'urgent' ? '🚨 Urgent' : results.urgency === 'moderate' ? '⚠️ Moderate Priority' : '📅 Routine'}
-            </Badge>
+            {urgencyBadge}
             <Badge variant="outline" className="text-blue-700 border-blue-300">
               <User className="h-3 w-3 mr-1" />
-              {results.doctorType}
+              {recSpecialty}
             </Badge>
             <Badge variant="outline" className="text-green-700 border-green-300">
               <Calendar className="h-3 w-3 mr-1" />
-              {results.timeframe || (results.urgency === 'urgent' ? 'Within 24-48 hours' : results.urgency === 'moderate' ? 'Within 1-2 weeks' : 'Within 2-4 weeks')}
+              {timeframe}
             </Badge>
           </div>
 
@@ -324,7 +366,7 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
           </div>
 
           {/* Additional Information */}
-          {results.urgency === 'urgent' && (
+          {recUrgency === 'critical' && (
             <Alert className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
@@ -333,7 +375,7 @@ const ResultsDashboard = ({ file, results, isAnalyzing, onReset }: ResultsDashbo
             </Alert>
           )}
 
-          {results.urgency !== 'urgent' && abnormalParameters.length > 0 && (
+          {recUrgency !== 'critical' && abnormalParameters.length > 0 && (
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
               <h5 className="font-medium text-yellow-800 mb-2">General Health Tips:</h5>
               <ul className="text-sm text-yellow-700 space-y-1">
