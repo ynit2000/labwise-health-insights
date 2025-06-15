@@ -3,6 +3,9 @@ import { OCRApiResponse, ExtractedData } from '@/types/ocrTypes';
 import { PatientInfoExtractor } from './patientInfoExtractor';
 import { ParameterExtractor } from './parameterExtractor';
 
+const PRIMARY_OCR_API_KEY = "K88990872588957";
+const SECONDARY_OCR_API_KEY = "K88904862588957";
+
 export class OCRApiService {
   private apiKey: string = '';
   private apiUrl: string = 'https://api.ocr.space/parse/image';
@@ -17,7 +20,6 @@ export class OCRApiService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // Add API key validation function
   async validateApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
     try {
       console.log('Validating OCR API key...');
@@ -112,9 +114,9 @@ export class OCRApiService {
   }
 
   async extractTextFromFile(file: File): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('OCR API key not provided. Please set your API key first.');
-    }
+    // Determine what API key to use:
+    let apiKeyToTry = this.apiKey || PRIMARY_OCR_API_KEY;
+    let triedSecondary = false;
 
     // Validate file size (OCR.space has limits)
     const maxFileSize = 5 * 1024 * 1024; // 5MB
@@ -122,52 +124,82 @@ export class OCRApiService {
       throw new Error('File too large. Please use a file smaller than 5MB for better OCR processing.');
     }
 
-    try {
-      console.log('Starting OCR API extraction for file:', file.name, 'Size:', Math.round(file.size / 1024), 'KB');
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('apikey', this.apiKey);
-      formData.append('language', 'eng');
-      formData.append('isOverlayRequired', 'false'); // Reduced overhead
-      formData.append('detectOrientation', 'true');
-      formData.append('isTable', 'true');
-      formData.append('scale', 'true');
-      formData.append('OCREngine', '2');
-      
-      const result = await this.makeOCRRequest(formData);
-      
-      if (result.IsErroredOnProcessing) {
-        const errorMessage = result.ParsedResults?.[0]?.ErrorMessage || 'Unknown OCR processing error';
-        throw new Error(`OCR processing failed: ${errorMessage}`);
-      }
+    let lastError: Error | null = null;
 
-      if (!result.ParsedResults || result.ParsedResults.length === 0) {
-        throw new Error('No text could be extracted from the image. Please ensure the image is clear and contains readable text.');
-      }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        console.log('Starting OCR API extraction for file:', file.name, 'Size:', Math.round(file.size / 1024), 'KB');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('apikey', apiKeyToTry);
+        formData.append('language', 'eng');
+        formData.append('isOverlayRequired', 'false');
+        formData.append('detectOrientation', 'true');
+        formData.append('isTable', 'true');
+        formData.append('scale', 'true');
+        formData.append('OCREngine', '2');
 
-      const extractedText = result.ParsedResults[0].ParsedText;
-      console.log('OCR API extraction completed successfully. Text length:', extractedText.length);
-      
-      if (extractedText.trim().length < 10) {
-        throw new Error('Very little text was extracted. Please ensure the image is clear and contains readable text.');
+        const result = await this.makeOCRRequest(formData);
+
+        if (result.IsErroredOnProcessing) {
+          const errorMessage = result.ParsedResults?.[0]?.ErrorMessage || 'Unknown OCR processing error';
+          // OCR.space returns a specific message for invalid/quota key:
+          if (
+            !triedSecondary &&
+            (errorMessage.includes('Invalid API key') ||
+              errorMessage.includes('quota') ||
+              errorMessage.includes('API key'))
+          ) {
+            apiKeyToTry = SECONDARY_OCR_API_KEY;
+            triedSecondary = true;
+            console.warn("Primary OCR key failed, retrying with secondary OCR key...");
+            continue;
+          }
+          throw new Error(`OCR processing failed: ${errorMessage}`);
+        }
+
+        if (!result.ParsedResults || result.ParsedResults.length === 0) {
+          throw new Error('No text could be extracted from the image. Please ensure the image is clear and contains readable text.');
+        }
+
+        const extractedText = result.ParsedResults[0].ParsedText;
+        console.log('OCR API extraction completed successfully. Text length:', extractedText.length);
+
+        if (extractedText.trim().length < 10) {
+          throw new Error('Very little text was extracted. Please ensure the image is clear and contains readable text.');
+        }
+
+        return extractedText;
+      } catch (error: any) {
+        lastError = error;
+        // Only swap key if the error is definitely related to the API key or quota and not already tried secondary
+        if (
+          !triedSecondary &&
+          (error.message?.includes('403') ||
+            error.message?.toLowerCase()?.includes('api key') ||
+            error.message?.toLowerCase()?.includes('quota'))
+        ) {
+          apiKeyToTry = SECONDARY_OCR_API_KEY;
+          triedSecondary = true;
+          console.warn("Primary OCR key failed, retrying with secondary OCR key...");
+          continue;
+        }
+        break;
       }
-      
-      return extractedText;
-    } catch (error) {
-      console.error('OCR API extraction failed:', error);
-      
-      // Provide more specific error messages
-      if (error.message.includes('403')) {
-        throw new Error('OCR API access denied. Please check your API key or try again later if you\'ve hit the concurrent connection limit.');
-      }
-      
-      if (error.message.includes('network') || error.message.includes('fetch')) {
-        throw new Error('Network error occurred. Please check your internet connection and try again.');
-      }
-      
-      throw new Error(`Failed to extract text from image: ${error.message}`);
     }
+
+    // Fallback: if still failed after retrying second key
+    if (lastError) {
+      if (
+        lastError.message?.includes('403') ||
+        lastError.message?.toLowerCase()?.includes('api key') ||
+        lastError.message?.toLowerCase()?.includes('quota')
+      ) {
+        throw new Error('Both primary and secondary OCR API keys failed. Please check your API key or try again later.');
+      }
+      throw new Error(`Failed to extract text from image: ${lastError.message}`);
+    }
+    throw new Error('Unknown error during OCR extraction.');
   }
 
   parseLabReport(extractedText: string): ExtractedData {
@@ -197,3 +229,4 @@ export class OCRApiService {
 }
 
 export const ocrApiService = new OCRApiService();
+
