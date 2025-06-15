@@ -14,19 +14,28 @@ import { ExtractedData } from '@/types/ocrTypes';
 import { aiExplanationService } from '@/services/aiExplanationService';
 import { toast } from '@/hooks/use-toast';
 
+const DEFAULT_OCR_API_KEY = "K88990872588957";
+
 const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(false);
+  // Default: always true (we now always have an API key for new users)
+  const [hasApiKey, setHasApiKey] = useState(true);
+  // Track if user wants to "change" key (not shown by default)
+  const [showApiKeyConfig, setShowApiKeyConfig] = useState(false);
 
-  // Add ref to UploadSection
   const uploadSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if API key exists in localStorage
+    // On mount, check key
     const savedApiKey = localStorage.getItem('ocr_api_key');
-    if (savedApiKey) {
+    if (!savedApiKey) {
+      // If no key, pre-fill with default and mark as set
+      localStorage.setItem('ocr_api_key', DEFAULT_OCR_API_KEY);
+      ocrApiService.setApiKey(DEFAULT_OCR_API_KEY);
+      setHasApiKey(true);
+    } else {
       ocrApiService.setApiKey(savedApiKey);
       setHasApiKey(true);
     }
@@ -35,6 +44,7 @@ const Index = () => {
   const handleApiKeySet = (apiKey: string) => {
     ocrApiService.setApiKey(apiKey);
     setHasApiKey(true);
+    setShowApiKeyConfig(false);
   };
 
   const handleFileUpload = async (file: File) => {
@@ -49,19 +59,15 @@ const Index = () => {
 
     setUploadedFile(file);
     setIsAnalyzing(true);
-    
+
     try {
       console.log('Starting file analysis for:', file.name);
-      
-      // Extract text using OCR API
       const extractedText = await ocrApiService.extractTextFromFile(file);
       console.log('OCR API completed, extracted text length:', extractedText.length);
-      
-      // Parse the lab report data
+
       const extractedData: ExtractedData = ocrApiService.parseLabReport(extractedText);
       console.log('Lab report parsed:', extractedData);
-      
-      // Enhance parameters with AI explanations
+
       const enhancedParameters = extractedData.parameters.map(param => ({
         ...param,
         explanation: aiExplanationService.generateExplanation(
@@ -71,10 +77,9 @@ const Index = () => {
           param.normalRange
         )
       }));
-      
-      // Generate enhanced doctor recommendation
+
       const doctorRecommendation = aiExplanationService.generateDoctorRecommendation(enhancedParameters);
-      
+
       const results = {
         patientInfo: extractedData.patientInfo,
         parameters: enhancedParameters,
@@ -85,14 +90,14 @@ const Index = () => {
         nextSteps: doctorRecommendation.nextSteps,
         reason: doctorRecommendation.reason
       };
-      
+
       setAnalysisResults(results);
-      
+
       toast({
         title: "Analysis Complete",
         description: `Successfully extracted ${enhancedParameters.length} parameters from your lab report.`,
       });
-      
+
     } catch (error) {
       console.error('Analysis failed:', error);
       toast({
@@ -111,7 +116,7 @@ const Index = () => {
     setIsAnalyzing(false);
   };
 
-  // New: Scroll handler to go to upload box
+  // Scroll handler to go to upload box
   const scrollToUploadSection = () => {
     if (uploadSectionRef.current) {
       uploadSectionRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -121,28 +126,38 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <Header />
-      
+
       {!uploadedFile && !analysisResults && (
         <>
           <HeroSection onUploadClick={scrollToUploadSection} />
           <FeaturesSection />
         </>
       )}
-      
+
       <div className="container mx-auto px-4 py-8">
-        {!hasApiKey && !uploadedFile && !analysisResults && (
+        {/* Show API Key Config only if user explicitly requests it */}
+        {showApiKeyConfig && (
           <div className="max-w-2xl mx-auto mb-8">
             <ApiKeyConfig onApiKeySet={handleApiKeySet} hasApiKey={hasApiKey} />
           </div>
         )}
-        
-        {hasApiKey && !uploadedFile && !analysisResults && (
-          // Add ref to this section
+
+        {!showApiKeyConfig && hasApiKey && !uploadedFile && !analysisResults && (
           <div ref={uploadSectionRef}>
             <UploadSection onFileUpload={handleFileUpload} />
+            {/* Option to change API key if desired */}
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="link" 
+                className="text-xs text-gray-500 underline" 
+                onClick={() => setShowApiKeyConfig(true)}
+              >
+                Change OCR API Key
+              </Button>
+            </div>
           </div>
         )}
-        
+
         {(uploadedFile || analysisResults) && (
           <ResultsDashboard 
             file={uploadedFile}
