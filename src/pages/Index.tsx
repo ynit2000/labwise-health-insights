@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, Brain, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,9 @@ const Index = () => {
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Add ref to UploadSection
+  const uploadSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Check if API key exists in localStorage
@@ -107,13 +111,20 @@ const Index = () => {
     setIsAnalyzing(false);
   };
 
+  // New: Scroll handler to go to upload box
+  const scrollToUploadSection = () => {
+    if (uploadSectionRef.current) {
+      uploadSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <Header />
       
       {!uploadedFile && !analysisResults && (
         <>
-          <HeroSection />
+          <HeroSection onUploadClick={scrollToUploadSection} />
           <FeaturesSection />
         </>
       )}
@@ -126,7 +137,10 @@ const Index = () => {
         )}
         
         {hasApiKey && !uploadedFile && !analysisResults && (
-          <UploadSection onFileUpload={handleFileUpload} />
+          // Add ref to this section
+          <div ref={uploadSectionRef}>
+            <UploadSection onFileUpload={handleFileUpload} />
+          </div>
         )}
         
         {(uploadedFile || analysisResults) && (
@@ -143,3 +157,4 @@ const Index = () => {
 };
 
 export default Index;
+

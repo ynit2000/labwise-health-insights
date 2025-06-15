@@ -2,7 +2,11 @@
 import { ArrowRight, Shield, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  onUploadClick?: () => void;
+}
+
+const HeroSection = ({ onUploadClick }: HeroSectionProps) => {
   return (
     <div className="relative overflow-hidden">
       <div className="container mx-auto px-4 py-16 lg:py-24">
@@ -29,6 +33,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-8 py-3 text-lg"
+              onClick={onUploadClick}
             >
               Upload Report Now
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -70,3 +75,4 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+
